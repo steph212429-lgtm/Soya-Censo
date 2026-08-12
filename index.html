@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBC Censo Soyapango</title>
+<style>
+  :root {
+    --blue: #1a2e4a;
+    --blue-dark: #0f1e30;
+    --blue-light: #eef4ff;
+    --yellow: #FD7B01;
+    --yellow-dark: #d46600;
+    --purple: #B648CB;
+    --green: #00BE00;
+    --sky: #009AE2;
+    --gold: #FFCD00;
+    --text: #1a1a2e;
+    --text-muted: #6b7280;
+    --border: #d1d5db;
+    --surface: #ffffff;
+    --bg: #f4f6f9;
+    --radius: 10px;
+    --success: #00BE00;
+    --danger: #dc2626;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--blue);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header-title {
+    color: white;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
+  }
+  .header-sub {
+    color: rgba(255,255,255,0.7);
+    font-size: 11px;
+    margin-top: 3px;
+  }
+
+  /* PROGRESS */
+  .cbc-bar { display: flex; height: 5px; }
+  .cbc-bar span { flex: 1; }
+  .progress-bar { background: var(--blue-dark); height: 4px; }
+  .progress-fill {
+    height: 100%;
+    background: var(--yellow);
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* CONTAINER */
+  .container {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  /* SECTION CARD */
+  .section {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    display: none;
+  }
+  .section.active { display: block; }
+  .section.always { display: block; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--yellow);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 14px;
+    line-height: 1.4;
+  }
+
+  /* FORM ELEMENTS */
+  label.field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 5px;
+  }
+  label.field-label .req { color: var(--danger); margin-left: 2px; }
+
+  select, input[type="text"], input[type="tel"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--surface);
+    font-family: inherit;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  select:focus, input:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(0,92,185,0.12);
+  }
+  input[readonly] {
+    background: var(--bg);
+    color: var(--text-muted);
+    border-color: var(--border);
+  }
+
+  .field-group { margin-bottom: 14px; }
+
+  /* AUTOCOMPLETE */
+  .autocomplete-wrap { position: relative; }
+  .autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0; right: 0;
+    background: white;
+    border: 1.5px solid var(--blue);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 200;
+    display: none;
+  }
+  .autocomplete-list.open { display: block; }
+  .autocomplete-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .autocomplete-item:hover, .autocomplete-item.focused { background: var(--blue-light); }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .sap-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--blue);
+    background: var(--blue-light);
+    padding: 2px 7px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  /* RADIO / CHECKBOX options */
+  .options-list { display: flex; flex-direction: column; gap: 8px; }
+  .group-divider {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 10px 0 2px;
+  }
+  .group-divider:first-child { margin-top: 0; }
+  .option-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    font-size: 14px;
+    user-select: none;
+  }
+  .option-item:hover { border-color: var(--blue); background: var(--blue-light); }
+  .option-item input[type="radio"], .option-item input[type="checkbox"] { display: none; }
+  .option-dot {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s;
+  }
+  .option-dot.square { border-radius: 5px; }
+  .option-item.selected { border-color: var(--blue); background: var(--blue-light); }
+  .option-item.selected .option-dot { border-color: var(--blue); background: var(--blue); }
+  .option-item.selected .option-dot::after {
+    content: '';
+    width: 6px; height: 6px;
+    background: white;
+    border-radius: 50%;
+  }
+  .option-item.selected .option-dot.square::after {
+    border-radius: 1px;
+  }
+
+  /* SAP duplicado inline */
+  .sap-dup-field { display: none; margin-top: 10px; }
+  .sap-dup-field.show { display: block; }
+  .inline-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    padding: 6px 10px;
+    background: #fff8e1;
+    border-left: 3px solid var(--yellow-dark);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .horario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* NAVIGATION BUTTONS */
+  .nav-btns { display: flex; gap: 10px; margin-top: 18px; }
+  .btn {
+    flex: 1;
+    padding: 13px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: var(--blue-dark); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-secondary {
+    background: var(--bg);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+    flex: 0 0 auto;
+    padding: 13px 18px;
+  }
+  .btn-success {
+    background: linear-gradient(135deg, #059669, #047857);
+    color: white;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(5,150,105,0.3);
+  }
+
+  /* SUCCESS SCREEN */
+  .success-screen { display: none; text-align: center; padding: 40px 20px; }
+  .success-screen.show { display: block; }
+  .success-icon {
+    width: 64px; height: 64px;
+    background: #d1fae5;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 32px;
+  }
+  .success-screen h2 { font-size: 20px; color: var(--success); margin-bottom: 8px; }
+  .success-screen p { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
+
+  /* ERROR messages */
+  .field-error { font-size: 12px; color: var(--danger); margin-top: 4px; display: none; }
+  .field-error.show { display: block; }
+
+  .skip-note { font-size: 12px; color: var(--text-muted); margin-top: 6px; font-style: italic; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 400px) {
+    .container { padding: 16px 10px; }
+    .section { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">CBC · CENSO SOYAPANGO SS41</div>
+    <div class="header-sub" id="header-sub">Completa los campos paso a paso</div>
+  </div>
+</div>
+<div class="cbc-bar"><span style="background:#B648CB"></span><span style="background:#FD7B01"></span><span style="background:#00BE00"></span><span style="background:#009AE2"></span><span style="background:#FFCD00"></span></div>
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<div class="container">
+
+  <!-- ═══════════════════════════════════════════
+       SECCIÓN 0: IDENTIFICACIÓN DEL CENSADOR
+  ════════════════════════════════════════════ -->
+  <div class="section always" id="sec-ident">
+    <div class="section-label">Identificación</div>
+    <div class="section-title">¿Quién eres?</div>
+
+    <div class="field-group">
+      <label class="field-label">Nombre del censador <span class="req">*</span></label>
+      <select id="sel-censador" onchange="onCensadorChange()" disabled>
+        <option value="">— Selecciona tu nombre —</option>
+        <option value="Ezequiel">Ezequiel</option>
+        <option value="Ivan">Ivan</option>
+        <option value="Jonathan">Jonathan</option>
+        <option value="Jose">Jose</option>
+        <option value="Mauricio">Mauricio</option>
+        <option value="Stephanie">Stephanie</option>
+      </select>
+      <div id="loading-clientes" style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:#6b7280"><span style="display:inline-block;width:14px;height:14px;border:2px solid #d1d5db;border-top-color:#005CB9;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0"></span>Cargando lista de clientes...</div>
+      <div id="load-status" style="font-size:12px;margin-top:4px"></div>
+      <div class="field-error" id="err-censador">Debes seleccionar tu nombre.</div>
+    </div>
+
+    <!-- SAP + Nombre cliente (aparece tras elegir censador) -->
+    <div id="cliente-fields" style="display:none">
+      <div class="field-group">
+        <label class="field-label">SAP del cliente <span class="req">*</span></label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="inp-sap" placeholder="Ej. 2057619" inputmode="numeric"
+                 oninput="onSapInput(this.value)" onkeydown="onSapKeydown(event)" autocomplete="off">
+          <div class="autocomplete-list" id="sap-list"></div>
+        </div>
+        <div class="field-error" id="err-sap">Debes seleccionar un SAP válido de tu lista.</div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Nombre del cliente</label>
+        <input type="text" id="inp-nombre-cliente" readonly placeholder="Se llena automáticamente">
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-primary" onclick="goToEstado()">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P1: LEVANTAMIENTO DE INFORMACIÓN (ESTADO)
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-estado">
+    <div class="section-label">Pregunta 1 de 17</div>
+    <div class="section-title">Levantamiento de información — ¿cuál es el estado del cliente?</div>
+    <div class="options-list" id="opt-estado">
+      <label class="option-item" onclick="selectOpt('estado','No visita Asesor', this)">
+        <div class="option-dot"></div>No visita Asesor
+      </label>
+      <label class="option-item" onclick="selectOpt('estado','No comprador', this)">
+        <div class="option-dot"></div>No comprador
+      </label>
+      <label class="option-item" onclick="selectOpt('estado','Se abastece por otros medios', this)">
+        <div class="option-dot"></div>Se abastece por otros medios (depósito, rutero, súper)
+      </label>
+      <label class="option-item" onclick="selectOpt('estado','Cierre Definitivo', this)">
+        <div class="option-dot"></div>Cierre Definitivo
+        <span class="skip-note" style="margin-left:auto;font-size:11px;color:var(--text-muted)">→ Fin</span>
+      </label>
+      <label class="option-item" onclick="selectOpt('estado','No encontrado', this)">
+        <div class="option-dot"></div>No encontrado
+        <span class="skip-note" style="margin-left:auto;font-size:11px;color:var(--text-muted)">→ Fin</span>
+      </label>
+      <label class="option-item" onclick="selectOpt('estado','Duplicado', this)">
+        <div class="option-dot"></div>Duplicado
+      </label>
+      <label class="option-item" onclick="selectOpt('estado','No brindó información', this)">
+        <div class="option-dot"></div>No brindó información
+        <span class="skip-note" style="margin-left:auto;font-size:11px;color:var(--text-muted)">→ Fin</span>
+      </label>
+    </div>
+    <!-- Campo SAP duplicado -->
+    <div class="sap-dup-field" id="sap-dup-wrap">
+      <div class="field-group" style="margin-top:10px">
+        <label class="field-label">SAP del cliente duplicado</label>
+        <input type="text" id="inp-sap-dup" placeholder="Ingresa el SAP (7 dígitos)" inputmode="numeric" maxlength="7" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+      </div>
+      <div class="inline-note">Ingresa el SAP del registro duplicado y continúa.</div>
+    </div>
+    <div class="field-error" id="err-estado">Selecciona una opción.</div>
+    <div class="field-error" id="err-sap-dup">El SAP duplicado debe tener 7 dígitos.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-ident')">← Atrás</button>
+      <button class="btn btn-primary" onclick="goEstadoNext()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P2: TELÉFONO 1 (OBLIGATORIO)
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-tel1">
+    <div class="section-label">Pregunta 2 de 17</div>
+    <div class="section-title">Número de teléfono 1</div>
+    <div class="field-group">
+      <label class="field-label">Teléfono 1 <span class="req">*</span></label>
+      <input type="tel" id="inp-tel1" placeholder="00000000" inputmode="numeric" maxlength="8" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+    </div>
+    <div class="field-error" id="err-tel1">Debe contener exactamente 8 dígitos.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-estado')">← Atrás</button>
+      <button class="btn btn-primary" onclick="goTel1Next()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P3: TELÉFONO 2 (OPCIONAL)
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-tel2">
+    <div class="section-label">Pregunta 3 de 17</div>
+    <div class="section-title">Número de teléfono 2 (opcional)</div>
+    <div class="field-group">
+      <input type="tel" id="inp-tel2" placeholder="00000000" inputmode="numeric" maxlength="8" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+    </div>
+    <div class="field-error" id="err-tel2">Si lo llenas, debe contener 8 dígitos.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-tel1')">← Atrás</button>
+      <button class="btn btn-primary" onclick="goTel2Next()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P4: ¿ACEPTA ATENCIÓN POR LLAMADA? (con salto)
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-llamada">
+    <div class="section-label">Pregunta 4 de 17</div>
+    <div class="section-title">¿Le gustaría recibir atención por llamada?</div>
+    <div class="options-list" id="opt-llamada">
+      <label class="option-item" onclick="selectOpt('aceptaLlamada','Sí', this)">
+        <div class="option-dot"></div>Sí
+        <span class="skip-note" style="margin-left:auto;font-size:11px;color:var(--blue)">→ Pregunta 5</span>
+      </label>
+      <label class="option-item" onclick="selectOpt('aceptaLlamada','No', this)">
+        <div class="option-dot"></div>No
+        <span class="skip-note" style="margin-left:auto;font-size:11px;color:var(--text-muted)">→ Pregunta 6</span>
+      </label>
+    </div>
+    <div class="field-error" id="err-llamada">Selecciona una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-tel2')">← Atrás</button>
+      <button class="btn btn-primary" onclick="goLlamadaNext()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P5: HORARIO (solo si P4 = Sí)
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-horario">
+    <div class="section-label">Pregunta 5 de 17</div>
+    <div class="section-title">¿Qué horario desearía que le atendieran por llamada?</div>
+    <div class="options-list" id="opt-horario">
+      <label class="option-item" onclick="selectOpt('horarioLlamada','Mañana', this)">
+        <div class="option-dot"></div>Mañana
+      </label>
+      <label class="option-item" onclick="selectOpt('horarioLlamada','Tarde', this)">
+        <div class="option-dot"></div>Tarde
+      </label>
+      <label class="option-item" onclick="selectOpt('horarioLlamada','Cualquier hora', this)">
+        <div class="option-dot"></div>Cualquier hora
+      </label>
+    </div>
+    <div class="field-error" id="err-horario">Selecciona una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-llamada')">← Atrás</button>
+      <button class="btn btn-primary" onclick="nextSec('sec-horario','sec-tipo-atencion','err-horario','horarioLlamada')">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P6: TIPO DE ATENCIÓN QUE PREFIERE
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-tipo-atencion">
+    <div class="section-label">Pregunta 6 de 17</div>
+    <div class="section-title">¿Qué tipo de atención prefiere?</div>
+    <div class="options-list" id="opt-tipo-atencion">
+      <label class="option-item" onclick="selectOpt('tipoAtencion','Visita Asesor', this)">
+        <div class="option-dot"></div>Visita Asesor
+      </label>
+      <label class="option-item" onclick="selectOpt('tipoAtencion','Solo llamada', this)">
+        <div class="option-dot"></div>Solo llamada
+      </label>
+      <label class="option-item" onclick="selectOpt('tipoAtencion','Aplicación Pepsi Chat', this)">
+        <div class="option-dot"></div>Aplicación Pepsi Chat
+      </label>
+      <label class="option-item" onclick="selectOpt('tipoAtencion','Pedidos por WhatsApp', this)">
+        <div class="option-dot"></div>Pedidos por WhatsApp
+      </label>
+      <label class="option-item" onclick="selectOpt('tipoAtencion','Todas las anteriores', this)">
+        <div class="option-dot"></div>Todas las anteriores
+      </label>
+    </div>
+    <div class="field-error" id="err-tipo-atencion">Selecciona una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" id="btn-tipo-atencion-back" onclick="goBackTipoAtencion()">← Atrás</button>
+      <button class="btn btn-primary" onclick="nextSec('sec-tipo-atencion','sec-atencion-ccx','err-tipo-atencion','tipoAtencion')">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P7: ATENCIÓN CCX
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-atencion-ccx">
+    <div class="section-label">Pregunta 7 de 17</div>
+    <div class="section-title">¿Bajo qué tipo de atención le atiende CCX?</div>
+    <div class="options-list" id="opt-atencion-ccx">
+      <label class="option-item" onclick="selectOpt('atencionCCX','Solo le llaman', this)">
+        <div class="option-dot"></div>Solo le llaman
+      </label>
+      <label class="option-item" onclick="selectOpt('atencionCCX','Ingresa pedido por Bees', this)">
+        <div class="option-dot"></div>Ingresa pedido por Bees
+      </label>
+      <label class="option-item" onclick="selectOpt('atencionCCX','Pedidos por WhatsApp', this)">
+        <div class="option-dot"></div>Pedidos por WhatsApp
+      </label>
+      <label class="option-item" onclick="selectOpt('atencionCCX','Se abastece por otros medios', this)">
+        <div class="option-dot"></div>Se abastece por otros medios (depósito, rutero, súper)
+      </label>
+    </div>
+    <div class="field-error" id="err-atencion-ccx">Selecciona una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-tipo-atencion')">← Atrás</button>
+      <button class="btn btn-primary" onclick="nextSec('sec-atencion-ccx','sec-dia-pedido','err-atencion-ccx','atencionCCX')">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P8: DÍA DE PEDIDO CCX
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-dia-pedido">
+    <div class="section-label">Pregunta 8 de 17</div>
+    <div class="section-title">¿Cuál es el día de pedido CCX?</div>
+    <div class="options-list horario-grid" id="opt-dia-pedido">
+      <label class="option-item" onclick="selectOpt('diaPedidoCCX','Lunes', this)"><div class="option-dot"></div>Lunes</label>
+      <label class="option-item" onclick="selectOpt('diaPedidoCCX','Martes', this)"><div class="option-dot"></div>Martes</label>
+      <label class="option-item" onclick="selectOpt('diaPedidoCCX','Miércoles', this)"><div class="option-dot"></div>Miércoles</label>
+      <label class="option-item" onclick="selectOpt('diaPedidoCCX','Jueves', this)"><div class="option-dot"></div>Jueves</label>
+      <label class="option-item" onclick="selectOpt('diaPedidoCCX','Viernes', this)"><div class="option-dot"></div>Viernes</label>
+      <label class="option-item" onclick="selectOpt('diaPedidoCCX','Sábado', this)"><div class="option-dot"></div>Sábado</label>
+    </div>
+    <div class="field-error" id="err-dia-pedido">Selecciona una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-atencion-ccx')">← Atrás</button>
+      <button class="btn btn-primary" onclick="nextSec('sec-dia-pedido','sec-dia-despacho','err-dia-pedido','diaPedidoCCX')">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P9: DÍA DE DESPACHO CCX
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-dia-despacho">
+    <div class="section-label">Pregunta 9 de 17</div>
+    <div class="section-title">¿Cuál es el día de despacho CCX?</div>
+    <div class="options-list horario-grid" id="opt-dia-despacho">
+      <label class="option-item" onclick="selectOpt('diaDespachoCCX','Lunes', this)"><div class="option-dot"></div>Lunes</label>
+      <label class="option-item" onclick="selectOpt('diaDespachoCCX','Martes', this)"><div class="option-dot"></div>Martes</label>
+      <label class="option-item" onclick="selectOpt('diaDespachoCCX','Miércoles', this)"><div class="option-dot"></div>Miércoles</label>
+      <label class="option-item" onclick="selectOpt('diaDespachoCCX','Jueves', this)"><div class="option-dot"></div>Jueves</label>
+      <label class="option-item" onclick="selectOpt('diaDespachoCCX','Viernes', this)"><div class="option-dot"></div>Viernes</label>
+      <label class="option-item" onclick="selectOpt('diaDespachoCCX','Sábado', this)"><div class="option-dot"></div>Sábado</label>
+    </div>
+    <div class="field-error" id="err-dia-despacho">Selecciona una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-dia-pedido')">← Atrás</button>
+      <button class="btn btn-primary" onclick="nextSec('sec-dia-despacho','sec-equipo-ccx','err-dia-despacho','diaDespachoCCX')">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P10: POSEE EQUIPO FRÍO CCX
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-equipo-ccx">
+    <div class="section-label">Pregunta 10 de 17</div>
+    <div class="section-title">¿Posee equipo frío CCX?</div>
+    <div class="options-list" id="opt-equipo-ccx">
+      <label class="option-item" onclick="selectOpt('equipoFrioCCX','Sí', this)"><div class="option-dot"></div>Sí</label>
+      <label class="option-item" onclick="selectOpt('equipoFrioCCX','No', this)"><div class="option-dot"></div>No</label>
+    </div>
+    <div class="field-error" id="err-equipo-ccx">Selecciona una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-dia-despacho')">← Atrás</button>
+      <button class="btn btn-primary" onclick="nextSec('sec-equipo-ccx','sec-equipo-cascada','err-equipo-ccx','equipoFrioCCX')">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P11: POSEE EQUIPO FRÍO CASCADA
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-equipo-cascada">
+    <div class="section-label">Pregunta 11 de 17</div>
+    <div class="section-title">¿Posee equipo frío Cascada?</div>
+    <div class="options-list" id="opt-equipo-cascada">
+      <label class="option-item" onclick="selectOpt('equipoFrioCascada','Sí', this)"><div class="option-dot"></div>Sí</label>
+      <label class="option-item" onclick="selectOpt('equipoFrioCascada','No', this)"><div class="option-dot"></div>No</label>
+    </div>
+    <div class="field-error" id="err-equipo-cascada">Selecciona una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-equipo-ccx')">← Atrás</button>
+      <button class="btn btn-primary" onclick="nextSec('sec-equipo-cascada','sec-equipo-propio','err-equipo-cascada','equipoFrioCascada')">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P12: POSEE EQUIPO FRÍO PROPIO
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-equipo-propio">
+    <div class="section-label">Pregunta 12 de 17</div>
+    <div class="section-title">¿Posee equipo frío propio?</div>
+    <div class="options-list" id="opt-equipo-propio">
+      <label class="option-item" onclick="selectOpt('equipoFrioPropio','Sí', this)"><div class="option-dot"></div>Sí</label>
+      <label class="option-item" onclick="selectOpt('equipoFrioPropio','No', this)"><div class="option-dot"></div>No</label>
+    </div>
+    <div class="field-error" id="err-equipo-propio">Selecciona una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-equipo-cascada')">← Atrás</button>
+      <button class="btn btn-primary" onclick="nextSec('sec-equipo-propio','sec-credito','err-equipo-propio','equipoFrioPropio')">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P13: POSEE CRÉDITO CON CCX
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-credito">
+    <div class="section-label">Pregunta 13 de 17</div>
+    <div class="section-title">¿Posee crédito con CCX?</div>
+    <div class="options-list" id="opt-credito">
+      <label class="option-item" onclick="selectOpt('creditoCCX','Sí', this)"><div class="option-dot"></div>Sí</label>
+      <label class="option-item" onclick="selectOpt('creditoCCX','No', this)"><div class="option-dot"></div>No</label>
+    </div>
+    <div class="field-error" id="err-credito">Selecciona una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-equipo-propio')">← Atrás</button>
+      <button class="btn btn-primary" onclick="nextSec('sec-credito','sec-descuentos','err-credito','creditoCCX')">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P14: CCX LE BRINDA DESCUENTOS (con salto)
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-descuentos">
+    <div class="section-label">Pregunta 14 de 17</div>
+    <div class="section-title">¿CCX le brinda descuentos?</div>
+    <div class="options-list" id="opt-descuentos">
+      <label class="option-item" onclick="selectOpt('descuentosCCX','Sí', this)">
+        <div class="option-dot"></div>Sí
+      </label>
+      <label class="option-item" onclick="selectOpt('descuentosCCX','No', this)">
+        <div class="option-dot"></div>No
+      </label>
+    </div>
+    <div class="field-error" id="err-descuentos">Selecciona una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-credito')">← Atrás</button>
+      <button class="btn btn-primary" onclick="goDescuentosNext()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P15: TIPO DE PROMOCIONES (solo si P14 = Sí, opción múltiple)
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-promociones">
+    <div class="section-label">Pregunta 15 de 17 · Opción múltiple</div>
+    <div class="section-title">¿Qué tipo de promociones le da CCX?</div>
+    <div class="options-list" id="opt-promociones">
+      <label class="option-item"><input type="checkbox" onchange="toggleMulti('promociones','Bonificación', this)"><div class="option-dot square"></div>Bonificación</label>
+      <label class="option-item"><input type="checkbox" onchange="toggleMulti('promociones','Descuentos en productos', this)"><div class="option-dot square"></div>Descuentos en productos</label>
+      <label class="option-item"><input type="checkbox" onchange="toggleMulti('promociones','Artículos', this)"><div class="option-dot square"></div>Artículos</label>
+      <label class="option-item"><input type="checkbox" onchange="toggleMulti('promociones','Puntos Bees', this)"><div class="option-dot square"></div>Puntos Bees</label>
+    </div>
+    <div class="field-error" id="err-promociones">Selecciona al menos una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-descuentos')">← Atrás</button>
+      <button class="btn btn-primary" onclick="goPromocionesNext()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P16: VENTA CCX (opción múltiple)
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-venta-ccx">
+    <div class="section-label">Pregunta 16 de 17 · Opción múltiple</div>
+    <div class="section-title">Venta CCX — ¿qué productos compra?</div>
+    <div class="options-list" id="opt-venta-ccx">
+      <label class="option-item"><input type="checkbox" onchange="toggleMulti('ventaCCX','Coca Cola 2.5Lts', this)"><div class="option-dot square"></div>Coca Cola 2.5Lts</label>
+      <label class="option-item"><input type="checkbox" onchange="toggleMulti('ventaCCX','Coca Cola 1.5Lts', this)"><div class="option-dot square"></div>Coca Cola 1.5Lts</label>
+      <label class="option-item"><input type="checkbox" onchange="toggleMulti('ventaCCX','Coca Cola lata', this)"><div class="option-dot square"></div>Coca Cola lata</label>
+    </div>
+    <div class="field-error" id="err-venta-ccx">Selecciona al menos una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" id="btn-venta-ccx-back" onclick="goBackVentaCCX()">← Atrás</button>
+      <button class="btn btn-primary" onclick="goVentaCCXNext()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       P17 (última): VENTA CASCADA (opción múltiple)
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-venta-cascada">
+    <div class="section-label">Última pregunta · Opción múltiple</div>
+    <div class="section-title">Venta Cascada — ¿qué productos compra?</div>
+    <div class="options-list" id="opt-venta-cascada">
+      <label class="option-item"><input type="checkbox" onchange="toggleMulti('ventaCascada','Salvacola 3Lts', this)"><div class="option-dot square"></div>Salvacola 3Lts</label>
+      <label class="option-item"><input type="checkbox" onchange="toggleMulti('ventaCascada','Salvacola 2Lts', this)"><div class="option-dot square"></div>Salvacola 2Lts</label>
+      <label class="option-item"><input type="checkbox" onchange="toggleMulti('ventaCascada','Salvacola 1.25Lts', this)"><div class="option-dot square"></div>Salvacola 1.25Lts</label>
+      <label class="option-item"><input type="checkbox" onchange="toggleMulti('ventaCascada','Salvacola 12 onz', this)"><div class="option-dot square"></div>Salvacola 12 onz</label>
+    </div>
+    <div class="field-error" id="err-venta-cascada">Selecciona al menos una opción.</div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goBack('sec-venta-ccx')">← Atrás</button>
+      <button class="btn btn-primary" onclick="goVentaCascadaNext()">Siguiente →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA DE RESUMEN + ENVÍO
+  ════════════════════════════════════════════ -->
+  <div class="section" id="sec-submit">
+    <div class="section-label">Resumen</div>
+    <div class="section-title">Revisa y envía la información</div>
+    <div id="resumen-content" style="font-size:13px; color:var(--text-muted); margin-bottom:16px;"></div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" id="btn-submit-back" onclick="goBackSubmit()">← Atrás</button>
+      <button class="btn btn-success" onclick="submitForm()">✓ Enviar respuesta</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PANTALLA DE ÉXITO
+  ════════════════════════════════════════════ -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">✓</div>
+    <h2>Respuesta enviada</h2>
+    <p id="success-detail">El registro fue guardado correctamente.</p>
+    <button class="btn btn-primary" onclick="resetForm()" style="max-width:220px;margin:0 auto">
+      + Nuevo cliente
+    </button>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIGURACIÓN — Solo edita esta línea
+// ═══════════════════════════════════════════════════════════
+
+// URL del Google Apps Script de CENSO SOYAPANGO (independiente del de Ruta 100 / Censo Pepsi)
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfnglMosZJFwQcpYaAc5w_kEDOSQWxrvK_TU9EhoEQsWluppfWXdSJDLoV2iMsjxsa/exec";
+
+// ═══════════════════════════════════════════════════════════
+// CLIENTES — se cargan automáticamente desde Google Sheets
+// ═══════════════════════════════════════════════════════════
+let CLIENTES = [];
+
+async function cargarClientes() {
+  const loading = document.getElementById('loading-clientes');
+  const selCensador = document.getElementById('sel-censador');
+  try {
+    loading.style.display = 'flex';
+    selCensador.disabled = true;
+    const res = await fetch(SCRIPT_URL);
+    const data = await res.json();
+    if (data.ok && data.clientes.length > 0) {
+      CLIENTES = data.clientes;
+      loading.style.display = 'none';
+      selCensador.disabled = false;
+      document.getElementById('load-status').textContent = CLIENTES.length + ' clientes cargados ✓';
+      document.getElementById('load-status').style.color = 'var(--success)';
+    } else {
+      throw new Error('Sin datos');
+    }
+  } catch(e) {
+    loading.style.display = 'none';
+    selCensador.disabled = false;
+    document.getElementById('load-status').textContent = '⚠ No se pudieron cargar los clientes. Verifica la conexión.';
+    document.getElementById('load-status').style.color = 'var(--danger)';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ESTADO DEL FORMULARIO
+// ═══════════════════════════════════════════════════════════
+const answers = {};
+const multiAnswers = {}; // para preguntas de opción múltiple: { key: Set(valores) }
+let currentCensador = "";
+let selectedSAP = null;
+let selectedCliente = "";
+let acFocusIdx = -1;
+let currentSuggestions = [];
+
+// Banderas para el botón Atrás dinámico (ruta condicional)
+let estadoEsFinal = false;        // estado terminó el formulario directo desde P1
+let llamadaEsNo = false;          // aceptó llamada = No, saltó horario
+
+const TOTAL_STEPS = 17;
+
+// ═══════════════════════════════════════════════════════════
+// PROGRESO
+// ═══════════════════════════════════════════════════════════
+function updateProgress(step) {
+  const pct = Math.round((step / TOTAL_STEPS) * 100);
+  document.getElementById('progress').style.width = pct + '%';
+}
+
+// ═══════════════════════════════════════════════════════════
+// CENSADOR SELECCIONADO
+// ═══════════════════════════════════════════════════════════
+function onCensadorChange() {
+  const val = document.getElementById('sel-censador').value;
+  currentCensador = val;
+  selectedSAP = null;
+  selectedCliente = "";
+  document.getElementById('inp-sap').value = "";
+  document.getElementById('inp-nombre-cliente').value = "";
+  document.getElementById('sap-list').classList.remove('open');
+  document.getElementById('cliente-fields').style.display = val ? 'block' : 'none';
+  document.getElementById('header-sub').textContent = val ? 'Censador: ' + val : 'Completa los campos paso a paso';
+  updateProgress(0);
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTOCOMPLETADO SAP
+// ═══════════════════════════════════════════════════════════
+function onSapInput(val) {
+  selectedSAP = null;
+  selectedCliente = "";
+  document.getElementById('inp-nombre-cliente').value = "";
+  acFocusIdx = -1;
+
+  if (!val.trim() || !currentCensador) {
+    document.getElementById('sap-list').classList.remove('open');
+    return;
+  }
+
+  const matches = CLIENTES.filter(c =>
+    c.censador === currentCensador && c.sap.startsWith(val.trim())
+  ).slice(0, 8);
+
+  currentSuggestions = matches;
+  renderSapList(matches);
+}
+
+function renderSapList(matches) {
+  const list = document.getElementById('sap-list');
+  if (!matches.length) { list.classList.remove('open'); return; }
+
+  list.innerHTML = matches.map((c, i) => `
+    <div class="autocomplete-item" data-idx="${i}" onclick="selectSap(${i})">
+      <span class="sap-badge">${c.sap}</span>
+      <span>${c.nombre}</span>
+    </div>
+  `).join('');
+  list.classList.add('open');
+}
+
+function selectSap(idx) {
+  const c = currentSuggestions[idx];
+  if (!c) return;
+  selectedSAP = c.sap;
+  selectedCliente = c.nombre;
+  document.getElementById('inp-sap').value = c.sap;
+  document.getElementById('inp-nombre-cliente').value = c.nombre;
+  document.getElementById('sap-list').classList.remove('open');
+  acFocusIdx = -1;
+}
+
+function onSapKeydown(e) {
+  const list = document.getElementById('sap-list');
+  const items = list.querySelectorAll('.autocomplete-item');
+  if (!items.length) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    acFocusIdx = Math.min(acFocusIdx + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('focused', i === acFocusIdx));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    acFocusIdx = Math.max(acFocusIdx - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('focused', i === acFocusIdx));
+  } else if (e.key === 'Enter' && acFocusIdx >= 0) {
+    e.preventDefault();
+    selectSap(acFocusIdx);
+  } else if (e.key === 'Escape') {
+    list.classList.remove('open');
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.autocomplete-wrap')) {
+    document.getElementById('sap-list').classList.remove('open');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// OPCIONES RADIO (selección única)
+// ═══════════════════════════════════════════════════════════
+function selectOpt(key, val, el) {
+  answers[key] = val;
+  const container = el.closest('.options-list');
+  container.querySelectorAll('.option-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+
+  // Lógica especial estado -> duplicado
+  if (key === 'estado') {
+    const sapDup = document.getElementById('sap-dup-wrap');
+    sapDup.classList.toggle('show', val === 'Duplicado');
+    if (val !== 'Duplicado') {
+      document.getElementById('inp-sap-dup').value = '';
+      delete answers.sapDuplicado;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// OPCIONES CHECKBOX (opción múltiple)
+// ═══════════════════════════════════════════════════════════
+function toggleMulti(key, val, el) {
+  if (!multiAnswers[key]) multiAnswers[key] = new Set();
+  const set = multiAnswers[key];
+  const item = el.closest('.option-item');
+  if (el.checked) {
+    set.add(val);
+    item.classList.add('selected');
+  } else {
+    set.delete(val);
+    item.classList.remove('selected');
+  }
+  answers[key] = Array.from(set).join(', ');
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVEGACIÓN GENÉRICA
+// ═══════════════════════════════════════════════════════════
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => {
+    if (!s.classList.contains('always')) s.classList.remove('active');
+  });
+  const target = document.getElementById(id);
+  if (target) {
+    target.classList.add('active');
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function goBack(toId) { showSection(toId); }
+
+function nextSec(fromId, toId, errId, ansKey) {
+  if (!answers[ansKey]) {
+    document.getElementById(errId).classList.add('show');
+    return;
+  }
+  document.getElementById(errId).classList.remove('show');
+  showSection(toId);
+
+  const stepMap = {
+    tipoAtencion: 7, atencionCCX: 8, diaPedidoCCX: 9, diaDespachoCCX: 10,
+    equipoFrioCCX: 11, equipoFrioCascada: 12, equipoFrioPropio: 13, creditoCCX: 14
+  };
+  if (stepMap[ansKey]) updateProgress(stepMap[ansKey]);
+}
+
+// ═══════════════════════════════════════════════════════════
+// FLUJO IDENTIFICACIÓN → P1 (ESTADO)
+// ═══════════════════════════════════════════════════════════
+function goToEstado() {
+  const errC = document.getElementById('err-censador');
+  const errS = document.getElementById('err-sap');
+
+  if (!currentCensador) { errC.classList.add('show'); return; }
+  errC.classList.remove('show');
+
+  if (!selectedSAP) { errS.classList.add('show'); return; }
+  errS.classList.remove('show');
+
+  answers['censador'] = currentCensador;
+  answers['sap'] = selectedSAP;
+  answers['nombre_cliente'] = selectedCliente;
+
+  showSection('sec-estado');
+  updateProgress(1);
+}
+
+// ═══════════════════════════════════════════════════════════
+// P1 (ESTADO) → SALTO CONDICIONAL
+// ═══════════════════════════════════════════════════════════
+const ESTADOS_FIN_INMEDIATO = ['Cierre Definitivo', 'No encontrado', 'No brindó información'];
+
+function goEstadoNext() {
+  if (!answers['estado']) {
+    document.getElementById('err-estado').classList.add('show'); return;
+  }
+  document.getElementById('err-estado').classList.remove('show');
+
+  if (answers['estado'] === 'Duplicado') {
+    const sapDupVal = document.getElementById('inp-sap-dup').value.trim();
+    if (!/^\d{7}$/.test(sapDupVal)) {
+      document.getElementById('err-sap-dup').classList.add('show');
+      return;
+    }
+    document.getElementById('err-sap-dup').classList.remove('show');
+    answers['sapDuplicado'] = sapDupVal;
+  }
+
+  if (ESTADOS_FIN_INMEDIATO.includes(answers['estado'])) {
+    estadoEsFinal = true;
+    buildResumen();
+    showSection('sec-submit');
+    updateProgress(17);
+    return;
+  }
+
+  estadoEsFinal = false;
+  showSection('sec-tel1');
+  updateProgress(2);
+}
+
+// ═══════════════════════════════════════════════════════════
+// P2: TELÉFONO 1 (obligatorio, 8 dígitos)
+// ═══════════════════════════════════════════════════════════
+function goTel1Next() {
+  const val = document.getElementById('inp-tel1').value.trim();
+  if (!/^\d{8}$/.test(val)) {
+    document.getElementById('err-tel1').classList.add('show'); return;
+  }
+  document.getElementById('err-tel1').classList.remove('show');
+  answers['telefono1'] = val;
+  showSection('sec-tel2');
+  updateProgress(3);
+}
+
+// ═══════════════════════════════════════════════════════════
+// P3: TELÉFONO 2 (opcional)
+// ═══════════════════════════════════════════════════════════
+function goTel2Next() {
+  const val = document.getElementById('inp-tel2').value.trim();
+  if (val !== '' && !/^\d{8}$/.test(val)) {
+    document.getElementById('err-tel2').classList.add('show'); return;
+  }
+  document.getElementById('err-tel2').classList.remove('show');
+  answers['telefono2'] = val;
+  showSection('sec-llamada');
+  updateProgress(4);
+}
+
+// ═══════════════════════════════════════════════════════════
+// P4: ACEPTA LLAMADA → SALTO CONDICIONAL (Sí→P5 horario→P6, No→P6 directo)
+// ═══════════════════════════════════════════════════════════
+function goLlamadaNext() {
+  if (!answers['aceptaLlamada']) {
+    document.getElementById('err-llamada').classList.add('show'); return;
+  }
+  document.getElementById('err-llamada').classList.remove('show');
+
+  if (answers['aceptaLlamada'] === 'No') {
+    llamadaEsNo = true;
+    delete answers['horarioLlamada'];
+    showSection('sec-tipo-atencion');
+    updateProgress(6);
+  } else {
+    llamadaEsNo = false;
+    showSection('sec-horario');
+    updateProgress(5);
+  }
+}
+
+// ── Atrás dinámico P6 (tipo de atención) ──────────────────
+function goBackTipoAtencion() {
+  showSection(llamadaEsNo ? 'sec-llamada' : 'sec-horario');
+}
+
+// ═══════════════════════════════════════════════════════════
+// P14: DESCUENTOS → SALTO CONDICIONAL (Sí→P15 promociones, No→P16 venta CCX)
+// ═══════════════════════════════════════════════════════════
+function goDescuentosNext() {
+  if (!answers['descuentosCCX']) {
+    document.getElementById('err-descuentos').classList.add('show'); return;
+  }
+  document.getElementById('err-descuentos').classList.remove('show');
+  showSection('sec-promociones');
+  updateProgress(15);
+}
+
+// ═══════════════════════════════════════════════════════════
+// P15: PROMOCIONES (opción múltiple)
+// ═══════════════════════════════════════════════════════════
+function goPromocionesNext() {
+  if (!answers['promociones']) {
+    document.getElementById('err-promociones').classList.add('show'); return;
+  }
+  document.getElementById('err-promociones').classList.remove('show');
+  showSection('sec-venta-ccx');
+  updateProgress(16);
+}
+
+// ── Atrás dinámico P16 (venta CCX) ─────────────────────────
+function goBackVentaCCX() {
+  showSection('sec-promociones');
+}
+
+// ═══════════════════════════════════════════════════════════
+// P16: VENTA CCX (opción múltiple)
+// ═══════════════════════════════════════════════════════════
+function goVentaCCXNext() {
+  if (!answers['ventaCCX']) {
+    document.getElementById('err-venta-ccx').classList.add('show'); return;
+  }
+  document.getElementById('err-venta-ccx').classList.remove('show');
+  showSection('sec-venta-cascada');
+  updateProgress(17);
+}
+
+// ═══════════════════════════════════════════════════════════
+// P17: VENTA CASCADA (opción múltiple) → RESUMEN
+// ═══════════════════════════════════════════════════════════
+function goVentaCascadaNext() {
+  if (!answers['ventaCascada']) {
+    document.getElementById('err-venta-cascada').classList.add('show'); return;
+  }
+  document.getElementById('err-venta-cascada').classList.remove('show');
+  buildResumen();
+  showSection('sec-submit');
+  updateProgress(17);
+}
+
+// ── Atrás dinámico del resumen ─────────────────────────────
+function goBackSubmit() {
+  if (estadoEsFinal) { showSection('sec-estado'); return; }
+  showSection('sec-venta-cascada');
+}
+
+// ═══════════════════════════════════════════════════════════
+// RESUMEN
+// ═══════════════════════════════════════════════════════════
+function buildResumen() {
+  const rows = [
+    ['Censador', answers.censador],
+    ['SAP', answers.sap],
+    ['Cliente', answers.nombre_cliente],
+    ['Estado del cliente', answers.estado],
+    answers.sapDuplicado ? ['SAP duplicado', answers.sapDuplicado] : null,
+    ['Teléfono 1', answers.telefono1],
+    ['Teléfono 2', answers.telefono2],
+    ['Acepta atención por llamada', answers.aceptaLlamada],
+    answers.horarioLlamada ? ['Horario para llamada', answers.horarioLlamada] : null,
+    ['Tipo de atención preferido', answers.tipoAtencion],
+    ['Atención CCX', answers.atencionCCX],
+    ['Día de pedido CCX', answers.diaPedidoCCX],
+    ['Día de despacho CCX', answers.diaDespachoCCX],
+    ['Posee equipo frío CCX', answers.equipoFrioCCX],
+    ['Posee equipo frío Cascada', answers.equipoFrioCascada],
+    ['Posee equipo frío propio', answers.equipoFrioPropio],
+    ['Posee crédito con CCX', answers.creditoCCX],
+    ['CCX le brinda descuentos', answers.descuentosCCX],
+    answers.promociones ? ['Tipo de promociones', answers.promociones] : null,
+    ['Venta CCX', answers.ventaCCX],
+    ['Venta Cascada', answers.ventaCascada],
+  ].filter(Boolean);
+
+  document.getElementById('resumen-content').innerHTML = rows.map(([k, v]) =>
+    `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6;gap:10px;">
+      <span style="color:#6b7280">${k}</span>
+      <span style="font-weight:500;color:#1a1a1a;text-align:right;max-width:55%">${v || '—'}</span>
+    </div>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// ENVÍO DEL FORMULARIO
+// ═══════════════════════════════════════════════════════════
+function submitForm() {
+  const timestamp = new Date().toLocaleString('es-SV');
+  const payload = { ...answers, timestamp };
+
+  if (SCRIPT_URL && !SCRIPT_URL.includes('REEMPLAZAR_CON_TU_DEPLOYMENT_URL')) {
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(() => {});
+  }
+
+  document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+  document.getElementById('success-detail').textContent =
+    `Cliente: ${answers.nombre_cliente} (SAP: ${answers.sap}) · ${timestamp}`;
+  document.getElementById('success-screen').classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════════════════════════
+function resetForm() {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  Object.keys(multiAnswers).forEach(k => delete multiAnswers[k]);
+  currentCensador = "";
+  selectedSAP = null;
+  selectedCliente = "";
+  estadoEsFinal = false;
+  llamadaEsNo = false;
+
+  document.getElementById('sel-censador').value = '';
+  document.getElementById('inp-sap').value = '';
+  document.getElementById('inp-nombre-cliente').value = '';
+  document.getElementById('cliente-fields').style.display = 'none';
+  document.getElementById('sap-dup-wrap').classList.remove('show');
+  document.querySelectorAll('.option-item').forEach(i => i.classList.remove('selected'));
+  document.querySelectorAll('input[type="tel"], input[type="text"]').forEach(i => { if (i.id !== 'sel-censador') i.value = ''; });
+  document.getElementById('header-sub').textContent = 'Completa los campos paso a paso';
+
+  document.querySelectorAll('.section').forEach(s => {
+    s.style.display = '';
+    s.classList.remove('active');
+  });
+  document.getElementById('success-screen').classList.remove('show');
+  document.getElementById('sec-ident').classList.add('always');
+  updateProgress(0);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Cargar clientes al iniciar
+cargarClientes();
+</script>
+
+</body>
+</html>
